@@ -1,0 +1,19 @@
+<resources>
+    <!--
+    TODO: Before you run your application, you need a Google Maps API key.
+
+    To get one, follow this link, follow the directions and press "Create" at the end:
+
+    https://console.developers.google.com/flows/enableapi?apiid=maps_android_backend&keyType=CLIENT_SIDE_ANDROID&r=57:17:71:56:8A:BC:12:A9:8A:B9:A7:5F:88:C1:07:F0:78:01:C7:5C%3Bcom.wearable.alphafitness
+
+    You can also add your credentials to an existing key, using this line:
+    57:17:71:56:8A:BC:12:A9:8A:B9:A7:5F:88:C1:07:F0:78:01:C7:5C;com.wearable.alphafitness
+
+    Alternatively, follow the directions here:
+    https://developers.google.com/maps/documentation/android/start#get-key
+
+    Once you have your key (it starts with "AIza"), replace the "google_maps_key"
+    string in this file.
+    -->
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyBdVJpcFte8QvolxB0W44riAWjWfdmzG5Q</string>
+</resources>

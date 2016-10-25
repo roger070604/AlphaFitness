@@ -1,0 +1,29 @@
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools ="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:id="@+id/container_wrapper"
+    android:layout_height="fill_parent"
+    android:orientation="horizontal"
+    tools:context=".RecordWorkoutActivity">
+
+
+
+    <fragment
+        android:name="com.wearable.alphafitness.LandScapeRecordWorkout"
+        android:id="@+id/landscape_recordWorkout_fragment"
+        android:layout_weight="1"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        class="com.wearable.alphafitness.LandScapeRecordWorkout"
+        tools:layout="@layout/fragment_landscape_record_workout">
+    </fragment>
+
+
+</LinearLayout>
+
+
+
+
+
+

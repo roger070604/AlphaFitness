@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">AlphaFitness</string>
+    <string name="title_activity_record_workout">ALPHA_FITNESS</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="landscape_workoutDetails">Workout Details</string>
+    <string name="portrait_record_workout">Record Workout</string>
+    <string name="permission_notice">Please note that your location permission is important if you want to draw your route on map while walking or running</string>
+    <string name="permission_title">Location Permission Denied</string>
+    <string name="cancel_permission_notice">Wow, please come back again when you need it and grant the permission</string>
+    <string name="start_tracking">Start Workout</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="google_android_map_api_key"> AIzaSyBdVJpcFte8QvolxB0W44riAWjWfdmzG5Q </string>
+</resources>
