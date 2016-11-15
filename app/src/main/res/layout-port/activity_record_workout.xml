@@ -8,6 +8,9 @@
     tools:context=".RecordWorkoutActivity">
 
 
+
+
+
     <fragment
         android:name="com.wearable.alphafitness.PortraitRecordWorkout"
         android:id="@+id/portrait_recordWorkout_fragment"
