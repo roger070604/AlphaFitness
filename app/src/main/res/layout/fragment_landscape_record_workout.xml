@@ -8,15 +8,91 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="horizontal">
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="20dp"
+                    android:layout_width="104dp"
+                    android:layout_height="match_parent"
+                    android:textSize="20sp"
                     android:textColor="@color/colorPrimaryDark"
                     android:text="@string/landscape_workoutDetails"
                     android:paddingTop="8dp"
-                    android:paddingLeft="16dp"/>
+                    android:paddingLeft="16dp"
+                    android:gravity="center_vertical|fill_vertical" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+                    <TextView
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:textStyle="bold"
+                      android:textSize="12sp"
+                      android:textColor="@color/colorPrimaryText"
+                      android:text="@string/avg_speed"
+                        android:gravity="top" />
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="0.17"
+                            android:gravity="center"
+                            android:orientation="vertical">
+                            <TextView
+                              android:id="@+id/avgSpd_value"
+                              android:layout_width="wrap_content"
+                              android:layout_height="wrap_content"
+                              android:textSize="20sp"
+                              android:layout_marginTop="1dp"
+                              android:textColor="@color/colorAccent"
+                              android:text="@string/avg_speed_value" />
+                            <TextView
+                              android:layout_width="wrap_content"
+                              android:layout_height="wrap_content"
+                              android:textSize="20sp"
+                              android:layout_marginTop="1dp"
+                              android:textColor="@color/colorAccent"
+                              android:text="@string/speed_unit"/>
+                        </LinearLayout>
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textStyle="bold"
+                            android:textSize="12sp"
+                            android:textColor="@color/colorPrimaryText"
+                            android:text="@string/max_speed"/>
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+                                <TextView
+                                    android:id="@+id/maxSpd_value"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="20sp"
+                                    android:layout_marginTop="1dp"
+                                    android:textColor="@color/colorAccent"
+                                    android:text="@string/max_speed_value"/>
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="20sp"
+                                    android:layout_marginTop="1dp"
+                                    android:textColor="@color/colorAccent"
+                                    android:text="@string/speed_unit"/>
+                        </LinearLayout>
+                </LinearLayout>
+
+
         </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"

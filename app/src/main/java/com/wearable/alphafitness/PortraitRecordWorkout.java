@@ -95,6 +95,8 @@ public class PortraitRecordWorkout extends Fragment implements OnMapReadyCallbac
     public static final String KEY_LONGITUDE_COLUMN ="lng";
     public static final String KEY_TIME="loc";
     public static final String KEY_ID="_id";
+    private TextView MaxSpeedValue;
+    private TextView AvgSpeedValue;
     private TextView distanceValue;
     private TextView durationValue;
     public CustomSharedPreference customSharedPreference;
@@ -119,6 +121,8 @@ public class PortraitRecordWorkout extends Fragment implements OnMapReadyCallbac
         b1.setOnClickListener(mStartListener);
         distanceValue = (TextView)view.findViewById(R.id.distance_value);
         durationValue = (TextView)view.findViewById(R.id.duration_value);
+        //MaxSpeedValue = (TextView)view.findViewById(R.id.maxSpd_value);
+       // AvgSpeedValue = (TextView)view.findViewById(R.id.avgSpd_value);
         customSharedPreference = (CustomSharedPreference)getActivity().getApplication();
 
         //b2 = (Button)findViewById(R.id.stop);
@@ -191,9 +195,9 @@ public class PortraitRecordWorkout extends Fragment implements OnMapReadyCallbac
 
 
     @Override
-    public void onConnectionSuspended(int i) {
+public void onConnectionSuspended(int i) {
 
-    }
+}
 
     private class RouteBroadCastReceiver extends BroadcastReceiver{
         @Override
@@ -220,6 +224,9 @@ public class PortraitRecordWorkout extends Fragment implements OnMapReadyCallbac
             float[] distance = {0};
             float totalDistance=0;
             long totalDurationTime=0;
+            float maxSpeed=0;
+            float curSpeed=0;
+            float avgSpeed=0;
 
             if(local.equals("LOCAL")){
                 //get all data from database
@@ -258,12 +265,20 @@ public class PortraitRecordWorkout extends Fragment implements OnMapReadyCallbac
                   else
                     {
                         mLastLocation.distanceBetween(prevlat,prevlng,currentlat,currentlng,distance);
+                        if (distance[0]>0)
+                         curSpeed=(curEt-preEt)/distance[0]/60000;
+                        else
+                         curSpeed=0;
+
+                        if (curSpeed>maxSpeed)
+                            maxSpeed=curSpeed;
                         totalDistance=totalDistance+distance[0];
                         totalDurationTime=totalDurationTime+curEt-preEt;
                         preEt=curEt;
                         prevlat=currentlat;
                         prevlng=currentlng;
-                        Toast.makeText(customSharedPreference.getApplicationContext(), "New Distance added:"+Float.toString(distance[0])+",New Duration Time:"+ Long.toString((curEt-preEt))+"ms" , Toast.LENGTH_SHORT).show();
+                        Toast.makeText(customSharedPreference.getApplicationContext(), "New Distance added:"+Float.toString(distance[0])+",New Duration Time:"+ Long.toString((curEt-preEt))+"ms"+
+                                ",CurSpeed:"+ Float.toString(curSpeed), Toast.LENGTH_SHORT).show();
                     }
 
 
@@ -275,7 +290,18 @@ public class PortraitRecordWorkout extends Fragment implements OnMapReadyCallbac
                     // Traverse the pointer to the next row
                    allLocation.moveToNext();
                 }
-
+                if (totalDistance>0)
+                 avgSpeed=totalDurationTime/totalDistance/60000;
+                else
+                 avgSpeed=0;
+                customSharedPreference.setMaxSpeed(maxSpeed);
+                customSharedPreference.setAvgSpeed(avgSpeed);
+                customSharedPreference.setTotalDistance(totalDistance);
+                customSharedPreference.setTotalDurationTime(totalDurationTime);
+                //maxSpeed=customSharedPreference.getMaxSpeed();
+                //avgSpeed=customSharedPreference.getAvgSpeed();
+               // MaxSpeedValue.setText(Float.toString(maxSpeed));
+               // AvgSpeedValue.setText(Float.toString(avgSpeed));
 
                 if(startToPresentLocations.size() > 0 && isWorkingout){
                     //prepare map drawing.
@@ -295,9 +321,11 @@ public class PortraitRecordWorkout extends Fragment implements OnMapReadyCallbac
                     //float durationTime=(customSharedPreference.startWorkTime-customSharedPreference.endWorkTime)/60000;
                     durationValue.setText(Float.toString(totalDurationTime/60000)+"mins");
                     distanceValue.setText(Float.toString(totalDistance)+"m");
+                    //MaxSpeedValue.setText(Float.toString(maxSpeed));
+                    //AvgSpeedValue.setText(Float.toString(avgSpeed));
                     customSharedPreference.setTotalDistance(totalDistance);
                     customSharedPreference.setTotalDurationTime(totalDurationTime);
-                    Toast.makeText(customSharedPreference.getApplicationContext(), "Total Distance:"+Float.toString(totalDistance)+",New Duration Time:"+ Long.toString(totalDurationTime)+"ms" , Toast.LENGTH_SHORT).show();
+                    Toast.makeText(customSharedPreference.getApplicationContext(), "Total Distance:"+Float.toString(totalDistance)+",New Duration Time:"+ Long.toString(totalDurationTime)+"ms", Toast.LENGTH_SHORT).show();
 
                     drawRouteOnMap(mMap, locationPoints);
                 }
@@ -372,6 +400,7 @@ public class PortraitRecordWorkout extends Fragment implements OnMapReadyCallbac
            deleteTask.execute();
            Intent i = new Intent(getActivity(), RouteService.class);
            customSharedPreference.getApplicationContext().startService(i);
+           customSharedPreference.setServiceState(isWorkingout);
            b1.setText("Stop Workingout");
 
 
@@ -383,6 +412,19 @@ public class PortraitRecordWorkout extends Fragment implements OnMapReadyCallbac
            customSharedPreference.setEndWorkTime(System.currentTimeMillis());
            Intent s = new Intent(getActivity(), RouteService.class);
            customSharedPreference.getApplicationContext().stopService(s);
+           /*try {
+               if (routeReceiver == null) {
+                   Log.i(TAG, "Do not unregister receiver as it was never registered");
+               } else {
+
+                   Log.d(TAG, "Unregister receiver");
+                   customSharedPreference.getApplicationContext().unregisterReceiver(routeReceiver);
+                   routeReceiver = null;
+               }
+           } catch (Exception e) {
+               e.printStackTrace();
+           }*/
+           customSharedPreference.setServiceState(isWorkingout);
            b1.setText("Start Workingout");
 
        }
@@ -420,11 +462,33 @@ public class PortraitRecordWorkout extends Fragment implements OnMapReadyCallbac
     public void onPause() {
         super.onPause();
         mMapView.onPause();
-    }
-    @Override
+        try {
+            if (routeReceiver == null) {
+                Log.i(TAG, "Do not unregister receiver as it was never registered");
+            } else {
+                Log.d(TAG, "Unregister receiver");
+                customSharedPreference.getApplicationContext().unregisterReceiver(routeReceiver);
+                routeReceiver = null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+ }
+      @Override
     public void onDestroy() {
         super.onDestroy();
-        mMapView.onDestroy();
+          mMapView.onDestroy();
+        try {
+            if (routeReceiver == null) {
+                Log.i(TAG, "Do not unregister receiver as it was never registered");
+            } else {
+                Log.d(TAG, "Unregister receiver");
+                customSharedPreference.getApplicationContext().unregisterReceiver(routeReceiver);
+                routeReceiver = null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -453,10 +517,6 @@ public class PortraitRecordWorkout extends Fragment implements OnMapReadyCallbac
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        /*Fragment fragment = (getFragmentManager().findFragmentById(R.id.map));
-        FragmentTransaction ft = getActivity().getSupportFragmentManager().beginTransaction();
-        ft.remove(fragment);
-        ft.commit();*/
     }
 
 

@@ -15,6 +15,10 @@ public class CustomSharedPreference extends Application {
 
     public long totalDurationTime=0;
 
+    public float maxSpeed=0;
+
+    public float avgSpeed=0;
+
     public float totalDistance=0;
 
     private static Context context;
@@ -29,6 +33,7 @@ public class CustomSharedPreference extends Application {
     }
 
     public CustomSharedPreference(){
+
         serviceState=true;
     }
 
@@ -81,5 +86,26 @@ public class CustomSharedPreference extends Application {
     public long getTotalDurationTime()
     {
         return totalDurationTime;
+    }
+
+    public void setMaxSpeed(float ms)
+    {
+        maxSpeed=ms;
+    }
+
+    public float getMaxSpeed()
+    {
+        return maxSpeed;
+    }
+
+
+    public void setAvgSpeed(float as)
+    {
+        avgSpeed=as;
+    }
+
+    public float getAvgSpeed()
+    {
+        return avgSpeed;
     }
 }

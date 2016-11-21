@@ -4,6 +4,12 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="landscape_workoutDetails">Workout Details</string>
+
+    <string name="avg_speed">AVG</string>
+    <string name="max_speed">Max</string>
+    <string name="avg_speed_value">0</string>
+    <string name="max_speed_value">0</string>
+    <string name="speed_unit">min/km</string>
     <string name="portrait_record_workout">Record Workout</string>
     <string name="permission_notice">Please note that your location permission is important if you want to draw your route on map while walking or running</string>
     <string name="permission_title">Location Permission Denied</string>
