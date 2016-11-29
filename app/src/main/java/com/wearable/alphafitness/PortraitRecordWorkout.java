@@ -6,6 +6,10 @@ import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.AsyncTask;
@@ -27,9 +31,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.images.ImageManager;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.wearable.alphafitness.database.*;
 
@@ -100,6 +106,8 @@ public class PortraitRecordWorkout extends Fragment implements OnMapReadyCallbac
     private TextView distanceValue;
     private TextView durationValue;
     public CustomSharedPreference customSharedPreference;
+    private SensorManager senSensorManager;
+    private Sensor senAccelerometer;
 
 
 // TODO: Create public field for each column in your table.
@@ -125,8 +133,13 @@ public class PortraitRecordWorkout extends Fragment implements OnMapReadyCallbac
        // AvgSpeedValue = (TextView)view.findViewById(R.id.avgSpd_value);
         customSharedPreference = (CustomSharedPreference)getActivity().getApplication();
 
-        //b2 = (Button)findViewById(R.id.stop);
-        //b2.setOnClickListener(mStopListener);
+
+        ImageButton buttonProfileImage = (ImageButton) view.findViewById(R.id.Profile_Button);
+        buttonProfileImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View arg0) {
+                Intent intent = new Intent(getContext(), Profile.class);
+                startActivity(intent);}});
 
         mMapView = (MapView) view.findViewById(R.id.map);
         mMapView .onCreate(savedInstanceState);
@@ -173,7 +186,7 @@ public class PortraitRecordWorkout extends Fragment implements OnMapReadyCallbac
                 contentValues.put(DataBaseHelper.FIELD_LNG,point.longitude);
                 LocationInsertTask insertTask=new LocationInsertTask();
                 insertTask.execute(contentValues);
-                Toast.makeText(customSharedPreference.getApplicationContext(), "Marker is added to the Map", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(customSharedPreference.getApplicationContext(), "Marker is added to the Map", Toast.LENGTH_SHORT).show();
 
             }
         });
@@ -192,6 +205,10 @@ public class PortraitRecordWorkout extends Fragment implements OnMapReadyCallbac
 
 
     }
+
+
+
+
 
 
     @Override
@@ -224,9 +241,11 @@ public void onConnectionSuspended(int i) {
             float[] distance = {0};
             float totalDistance=0;
             long totalDurationTime=0;
-            float maxSpeed=0;
-            float curSpeed=0;
-            float avgSpeed=0;
+            double maxSpeed=0;
+            double minSpeed=0;
+            double curSpeed=0;
+            double avgSpeed=0;
+            int   avgStepCount_5=0;
 
             if(local.equals("LOCAL")){
                 //get all data from database
@@ -266,19 +285,24 @@ public void onConnectionSuspended(int i) {
                     {
                         mLastLocation.distanceBetween(prevlat,prevlng,currentlat,currentlng,distance);
                         if (distance[0]>0)
-                         curSpeed=(curEt-preEt)/distance[0]/60000;
+                         curSpeed=(curEt-preEt)/(distance[0]/1000)/60000;
                         else
                          curSpeed=0;
 
                         if (curSpeed>maxSpeed)
                             maxSpeed=curSpeed;
+                        if (curSpeed<minSpeed&&curSpeed>0)
+                            minSpeed=curSpeed;
                         totalDistance=totalDistance+distance[0];
                         totalDurationTime=totalDurationTime+curEt-preEt;
+                       /* customSharedPreference.addWorkoutTime((double)(curEt-preEt)/60000.0);
+                        customSharedPreference.addWorkoutDistance((double)(distance[0])/1000.0);*/
+
                         preEt=curEt;
                         prevlat=currentlat;
                         prevlng=currentlng;
-                        Toast.makeText(customSharedPreference.getApplicationContext(), "New Distance added:"+Float.toString(distance[0])+",New Duration Time:"+ Long.toString((curEt-preEt))+"ms"+
-                                ",CurSpeed:"+ Float.toString(curSpeed), Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(customSharedPreference.getApplicationContext(), "New Distance added:"+Float.toString(distance[0])+",New Duration Time:"+ Long.toString((curEt-preEt))+"ms"+
+                         //       ",CurSpeed:"+ Double.toString(curSpeed), Toast.LENGTH_SHORT).show();
                     }
 
 
@@ -290,14 +314,20 @@ public void onConnectionSuspended(int i) {
                     // Traverse the pointer to the next row
                    allLocation.moveToNext();
                 }
-                if (totalDistance>0)
-                 avgSpeed=totalDurationTime/totalDistance/60000;
+                if (totalDistance>0) {
+                    avgSpeed = ((double)(totalDurationTime) / 60000)/totalDistance;
+                    if (customSharedPreference.getProfileGender()=="female")
+                        avgStepCount_5= (int)((1/avgSpeed) /customSharedPreference.getfSteplength()*5);
+                    else
+                        avgStepCount_5= (int)((1/avgSpeed) /customSharedPreference.getmSteplength()*5);
+                }
                 else
-                 avgSpeed=0;
-                customSharedPreference.setMaxSpeed(maxSpeed);
-                customSharedPreference.setAvgSpeed(avgSpeed);
-                customSharedPreference.setTotalDistance(totalDistance);
-                customSharedPreference.setTotalDurationTime(totalDurationTime);
+                {     avgSpeed=0;
+                    avgStepCount_5=0;
+                }
+
+
+
                 //maxSpeed=customSharedPreference.getMaxSpeed();
                 //avgSpeed=customSharedPreference.getAvgSpeed();
                // MaxSpeedValue.setText(Float.toString(maxSpeed));
@@ -319,13 +349,21 @@ public void onConnectionSuspended(int i) {
                     markLocationOnMap(mMap,locationPoints.get(locSize-1),BitmapDescriptorFactory.HUE_BLUE);
 
                     //float durationTime=(customSharedPreference.startWorkTime-customSharedPreference.endWorkTime)/60000;
-                    durationValue.setText(Float.toString(totalDurationTime/60000)+"mins");
-                    distanceValue.setText(Float.toString(totalDistance)+"m");
-                    //MaxSpeedValue.setText(Float.toString(maxSpeed));
-                    //AvgSpeedValue.setText(Float.toString(avgSpeed));
-                    customSharedPreference.setTotalDistance(totalDistance);
-                    customSharedPreference.setTotalDurationTime(totalDurationTime);
-                    Toast.makeText(customSharedPreference.getApplicationContext(), "Total Distance:"+Float.toString(totalDistance)+",New Duration Time:"+ Long.toString(totalDurationTime)+"ms", Toast.LENGTH_SHORT).show();
+                    durationValue.setText(String.format("%.3f",totalDurationTime / 60000.0 )+"mins");
+                    distanceValue.setText(String.format("%.3f",totalDistance / 1000.0 )+"km");
+                    customSharedPreference.setMaxSpeed(maxSpeed);
+                    customSharedPreference.setAvgSpeed(avgSpeed);
+                    customSharedPreference.setMinSpeed(minSpeed);
+                    double preTotalDistance=customSharedPreference.getTotalDistance();
+                    double preTotalDuration=customSharedPreference.getTotalDurationTime();
+                    customSharedPreference.addWorkoutDistance(totalDistance/1000.0-preTotalDistance);
+                    customSharedPreference.addWorkoutTime(totalDurationTime/60000.0-preTotalDuration);
+                    customSharedPreference.setTotalDistance(totalDistance/1000.0);
+
+                    customSharedPreference.setTotalDurationTime((double)(totalDurationTime)/60000.0);
+
+                    customSharedPreference.addWorkoutStepCountSingle(avgStepCount_5);
+                    //Toast.makeText(customSharedPreference.getApplicationContext(), "Total Distance:"+Float.toString(totalDistance)+",New Duration Time:"+ Long.toString(totalDurationTime)+"ms", Toast.LENGTH_SHORT).show();
 
                     drawRouteOnMap(mMap, locationPoints);
                 }
@@ -400,8 +438,18 @@ public void onConnectionSuspended(int i) {
            deleteTask.execute();
            Intent i = new Intent(getActivity(), RouteService.class);
            customSharedPreference.getApplicationContext().startService(i);
+           customSharedPreference.setTotalDistance(0);
+           customSharedPreference.setTotalDurationTime(0);
+           customSharedPreference.resetWorkoutStepCountSingle();
+           customSharedPreference.setAvgSpeed(0);
+           customSharedPreference.setMaxSpeed(0);
+           customSharedPreference.setMinSpeed(0);
            customSharedPreference.setServiceState(isWorkingout);
            b1.setText("Stop Workingout");
+           customSharedPreference.setServiceState(isWorkingout);
+           int currentWorkoutCounts=customSharedPreference.getTotalCounter();
+           customSharedPreference.addTotalCounter(1);
+
 
 
        }
@@ -424,8 +472,12 @@ public void onConnectionSuspended(int i) {
            } catch (Exception e) {
                e.printStackTrace();
            }*/
-           customSharedPreference.setServiceState(isWorkingout);
+
+
+           //customSharedPreference.setTotalDistance();
            b1.setText("Start Workingout");
+
+
 
        }
 
@@ -461,6 +513,7 @@ public void onConnectionSuspended(int i) {
     @Override
     public void onPause() {
         super.onPause();
+       // senSensorManager.unregisterListener(this);
         mMapView.onPause();
         try {
             if (routeReceiver == null) {
@@ -491,6 +544,11 @@ public void onConnectionSuspended(int i) {
         }
     }
 
+
+
+
+
+
     @Override
     public void onSaveInstanceState(Bundle outState)
     {
@@ -506,6 +564,7 @@ public void onConnectionSuspended(int i) {
     public void onResume() {
         super.onResume();
         mMapView.onResume();
+       // senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         if(routeReceiver == null){
             routeReceiver = new RouteBroadCastReceiver();
         }

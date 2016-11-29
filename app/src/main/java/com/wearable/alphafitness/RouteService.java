@@ -2,7 +2,12 @@ package com.wearable.alphafitness;
 import android.Manifest;
 import android.app.Service;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -34,7 +39,8 @@ import com.wearable.alphafitness.database.DatabaseQuery;
 
 
 
-public class RouteService extends Service implements GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener,LocationListener{
+public class RouteService extends Service implements GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener,LocationListener
+{
     public RouteService() {
     }
 
@@ -49,7 +55,13 @@ public class RouteService extends Service implements GoogleApiClient.ConnectionC
     private CustomSharedPreference customSharedPreference;
     private DatabaseQuery query;
     private long startTimeInMilliSeconds = 0L;
+    public long iAccelTimestamp;
     private boolean isServiceRunning = false;
+
+
+
+
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -60,7 +72,7 @@ public class RouteService extends Service implements GoogleApiClient.ConnectionC
             //startTimeInMilliSeconds = 10000;
             Log.d(TAG, "Current time " + startTimeInMilliSeconds);
             Log.d(TAG, "Service is running");
-            Toast.makeText(getBaseContext(), "Current time:"+ Double.toString(startTimeInMilliSeconds), Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getBaseContext(), "Current time:"+ Double.toString(startTimeInMilliSeconds), Toast.LENGTH_SHORT).show();
         }
         //query = new DatabaseQuery(getApplicationContext());
         mLocationRequest = createLocationRequest();
@@ -72,14 +84,14 @@ public class RouteService extends Service implements GoogleApiClient.ConnectionC
                     .build();
             mGoogleApiClient.connect();
         }
+
+
+
+
     }
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        isServiceRunning = true;
-        return Service.START_STICKY;
-    }
-    @Nullable
+
+
 
 
 

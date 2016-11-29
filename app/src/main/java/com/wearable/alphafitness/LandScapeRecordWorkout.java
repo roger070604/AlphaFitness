@@ -30,6 +30,17 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.charts.ScatterChart;
+import com.github.mikephil.charting.components.LimitLine;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.data.ScatterData;
+import com.github.mikephil.charting.data.ScatterDataSet;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+import com.github.mikephil.charting.interfaces.datasets.IScatterDataSet;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.wearable.alphafitness.database.*;
@@ -91,9 +102,16 @@ public class LandScapeRecordWorkout extends Fragment implements OnMapReadyCallba
 
     private TextView MaxSpeedValue;
     private TextView AvgSpeedValue;
+    private TextView MinSpeedValue;
+    private ScatterChart workOutchart;
     private TextView distanceValue;
     private TextView durationValue;
+    List<Entry> entries_stepcout = new ArrayList<Entry>();
+    List<Entry> entries_calories = new ArrayList<Entry>();
+    public double profile_weight=160;
+    public String profile_gender="male";
     public CustomSharedPreference customSharedPreference;
+
 
 
 
@@ -112,8 +130,20 @@ public class LandScapeRecordWorkout extends Fragment implements OnMapReadyCallba
         getActivity().setTitle("LandScape WorkDeatils");
         MaxSpeedValue = (TextView)view.findViewById(R.id.maxSpd_value);
         AvgSpeedValue = (TextView)view.findViewById(R.id.avgSpd_value);
+        MinSpeedValue = (TextView)view.findViewById(R.id.minSpd_value);
         customSharedPreference = (CustomSharedPreference)getActivity().getApplication();
+        profile_weight=customSharedPreference.getProfileWeight();
+        profile_gender=customSharedPreference.getProfileGender();
 
+        workOutchart = (ScatterChart) view.findViewById(R.id.workoutchart);
+        workOutchart.setDragEnabled(false);
+        workOutchart.setScaleEnabled(true);
+        workOutchart.setPinchZoom(true);
+        workOutchart.getAxisLeft().setAxisMaximum(50);
+        workOutchart.getAxisLeft().setAxisMinimum(0);
+        workOutchart.getAxisRight().setEnabled(true);
+        workOutchart.getAxisRight().setAxisMaximum(2);
+        workOutchart.getAxisRight().setAxisMinimum(0);
         //b2 = (Button)findViewById(R.id.stop);
         //b2.setOnClickListener(mStopListener);
 
@@ -161,11 +191,14 @@ public class LandScapeRecordWorkout extends Fragment implements OnMapReadyCallba
             double currentlat=0;
             double currentlng=0;
             float[] distance = {0};
-            float totalDistance=0;
+            double totalDistance=0;
             long totalDurationTime=0;
-            float maxSpeed=0;
-            float curSpeed=0;
-            float avgSpeed=0;
+            double maxSpeed=0;
+            double minSpeed=5;
+            double curSpeed=0;
+            double avgSpeed=0;
+            int   stepCount=0;
+            int   avgStepCount_5=0;
 
             if(local.equals("LOCAL")){
                 //get all data from database
@@ -205,18 +238,24 @@ public class LandScapeRecordWorkout extends Fragment implements OnMapReadyCallba
                     {
                         mLastLocation.distanceBetween(prevlat,prevlng,currentlat,currentlng,distance);
                         if (distance[0]>0)
-                            curSpeed=(curEt-preEt)/distance[0]/60;
+                            curSpeed=(double)(curEt-preEt)/(distance[0])/60000;
                         else
                             curSpeed=0;
 
+
                         if (curSpeed>maxSpeed)
                             maxSpeed=curSpeed;
+                        if (curSpeed<minSpeed && curSpeed>0)
+                            minSpeed=curSpeed;
+
                         totalDistance=totalDistance+distance[0];
                         totalDurationTime=totalDurationTime+curEt-preEt;
+                        /*customSharedPreference.addWorkoutTime((double)(curEt-preEt)/60000.0);
+                        customSharedPreference.addWorkoutDistance((double)(distance[0])/1000.0);*/
                         preEt=curEt;
                         prevlat=currentlat;
                         prevlng=currentlng;
-                        Toast.makeText(customSharedPreference.getApplicationContext(), "curSpeed"+Float.toString(curSpeed)+",New Duration Time:"+ Long.toString((curEt-preEt))+"ms" , Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(customSharedPreference.getApplicationContext(), "curSpeed"+Double.toString(curSpeed)+",New Duration Time:"+ Long.toString((curEt-preEt))+"ms" , Toast.LENGTH_SHORT).show();
                     }
 
 
@@ -229,16 +268,78 @@ public class LandScapeRecordWorkout extends Fragment implements OnMapReadyCallba
                     allLocation.moveToNext();
                 }
 
-                    avgSpeed=totalDurationTime/totalDistance/60;
-                    customSharedPreference.setMaxSpeed(maxSpeed);
-                    customSharedPreference.setAvgSpeed(avgSpeed);
-                    customSharedPreference.setTotalDistance(totalDistance);
-                    customSharedPreference.setTotalDurationTime(totalDurationTime);
-                    MaxSpeedValue.setText(Float.toString(maxSpeed));
-                    AvgSpeedValue.setText(Float.toString(avgSpeed));
-                    Toast.makeText(customSharedPreference.getApplicationContext(), "MaxSpeed:"+Float.toString(maxSpeed)+",AvgSpeed:"+ Float.toString(avgSpeed)+"ms" , Toast.LENGTH_SHORT).show();
+                if (totalDistance>0) {
+                    avgSpeed = ((double)(totalDurationTime) /60000.0)/totalDistance;
+                    if (customSharedPreference.getProfileGender()=="female")
+                        avgStepCount_5= (int)((1/avgSpeed) /customSharedPreference.getfSteplength()*5);
+                    else
+                        avgStepCount_5= (int)((1/avgSpeed) /customSharedPreference.getmSteplength()*5);
+                }
+                else
+                {     avgSpeed=0;
+                    avgStepCount_5=0;
+                }
+
+
+                customSharedPreference.setMaxSpeed(maxSpeed);
+                customSharedPreference.setAvgSpeed(avgSpeed);
+                customSharedPreference.setMinSpeed(minSpeed);
+               double preTotalDistance=customSharedPreference.getTotalDistance();
+                double preTotalDuration=customSharedPreference.getTotalDurationTime();
+                customSharedPreference.addWorkoutDistance(totalDistance/1000.0-preTotalDistance);
+                customSharedPreference.addWorkoutTime(totalDurationTime/60000.0-preTotalDuration);
+                customSharedPreference.setTotalDistance(totalDistance/1000.0);
+                customSharedPreference.setTotalDurationTime((double)(totalDurationTime)/60000.0);
+
+
+
+                //customSharedPreference.addWorkoutTime((double)(totalDurationTime)/60000.0);
+               // customSharedPreference.addWorkoutStepCountSingle(avgStepCount_5);
+                MaxSpeedValue.setText(String.format( "%.3f",maxSpeed));
+                AvgSpeedValue.setText(String.format( "%.3f",avgSpeed));
+                MinSpeedValue.setText(String.format( "%.3f",minSpeed));
+                //Toast.makeText(customSharedPreference.getApplicationContext(), "MaxSpeed:"+Double.toString(maxSpeed)+",AvgSpeed:"+ Double.toString(avgSpeed)+"ms" +",MinSpeed:"+ Double.toString(minSpeed)+"ms"+",stepCount:"+ Integer.toString(avgStepCount_5)+"/5mins", Toast.LENGTH_SHORT).show();
+                ArrayList<Integer> workoutStepgraph=new ArrayList<Integer>();
+                int totalStepCountNum=customSharedPreference.getWorkoutStepCountSingle().size();
+                if (totalStepCountNum>0)
+                {
+                         for(int j=0;j<totalStepCountNum;j++)
+                         {
+                             int stepcount_temp=customSharedPreference.getWorkoutStepCountSingle().get(j);
+                             entries_stepcout.add(new Entry(j, stepcount_temp));
+
+                             entries_calories.add(new Entry(j, (float)((float)(stepcount_temp)*25/1000.0/100.0*profile_weight)));
+                         }
+
+                         ScatterDataSet sStepCount5=new ScatterDataSet(entries_stepcout,"step/5 mins left Y Axis");
+                         sStepCount5.setAxisDependency(YAxis.AxisDependency.LEFT);
+                         sStepCount5.setColor(Color.RED);
+                         //sStepCount5.setCircleColor(Color.RED);
+                         ScatterDataSet sCaloires=new ScatterDataSet(entries_calories,"calories/5 mins right Y Axis");
+                         sCaloires.setAxisDependency(YAxis.AxisDependency.RIGHT);
+                         sCaloires.setColor(Color.BLUE);
+                         //sCaloires.setCircleColor(Color.GREEN);
+
+                         List<IScatterDataSet> dataSets = new ArrayList<IScatterDataSet>();
+                         dataSets.add(sStepCount5);
+                         dataSets.add(sCaloires);
+
+                         ScatterData data = new ScatterData(dataSets);
+                        // YAxis leftAxis = workOutchart.getAxisLeft();
+                        // YAxis rightAxis = workOutchart.getAxisRight();
+
+
+
+                         workOutchart.clear();
+                         workOutchart.setData(data);
+
+                         workOutchart.invalidate(); // refresh
 
                 }
+
+
+
+            }
             }
         }
 
